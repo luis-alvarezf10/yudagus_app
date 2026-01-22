@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Sidebar } from '../components/Sidebar'
 import { reviewService, REVIEW_STATUSES, CreateReviewForm } from '@/features/reviews'
 import type { Review, CreateReviewData } from '@/features/reviews'
+import { supabase } from '@/lib/supabase'
 
 interface StatCard {
   title: string
@@ -15,19 +16,25 @@ interface StatCard {
 interface Employee {
   id: string
   name: string
-  role: string
-  status: 'online' | 'offline' | 'busy'
-  avatar?: string
+  national_id?: string | null
+  is_manager: boolean
+  created_at: string
+  id_profession?: string | null
+  professions?: {
+    name: string
+  } | null
 }
 
 export const ManagerDashboardPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [reviews, setReviews] = useState<Review[]>([])
+  const [employees, setEmployees] = useState<Employee[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [pendingReviewsCount, setPendingReviewsCount] = useState(0)
   
-  const [stats] = useState<StatCard[]>([
+  const stats: StatCard[] = [
     {
       title: 'Proyectos Activos',
       value: 12,
@@ -37,61 +44,53 @@ export const ManagerDashboardPage = () => {
       subtitle: 'vs mes anterior'
     },
     {
-      title: 'Horas Facturables',
-      value: '1,240',
-      icon: '⏰',
-      change: '-5%',
-      changeType: 'negative',
-      subtitle: 'vs mes anterior'
-    },
-    {
       title: 'Revisiones Pendientes',
-      value: '05',
+      value: pendingReviewsCount,
       icon: '✓',
       change: '-10%',
       changeType: 'negative',
       subtitle: 'vs semana anterior'
     },
-    {
-      title: 'Satisfacción',
-      value: '98%',
-      icon: '😊',
-      change: '+1%',
-      changeType: 'positive',
-      subtitle: 'objetivo 95%'
-    }
-  ])
-
-  const [employees] = useState<Employee[]>([
-    {
-      id: '1',
-      name: 'Sarah Chen',
-      role: 'Arquitecta Principal',
-      status: 'online'
-    },
-    {
-      id: '2',
-      name: 'Marcus Thorne',
-      role: 'Ingeniero DevOps',
-      status: 'online'
-    },
-    {
-      id: '3',
-      name: 'Elena Rodriguez',
-      role: 'Líder QA Senior',
-      status: 'offline'
-    },
-    {
-      id: '4',
-      name: 'David Kim',
-      role: 'Desarrollador Backend Sr.',
-      status: 'busy'
-    }
-  ])
+  ]
 
   useEffect(() => {
     loadReviews()
+    loadEmployees()
+    loadPendingReviewsCount()
   }, [])
+
+  const loadPendingReviewsCount = async () => {
+    try {
+      const { count, error: countError } = await supabase
+        .from('reviews')
+        .select('*', { count: 'exact', head: true })
+        .is('id_status', null) // null = En Espera (pendiente)
+
+      if (countError) throw countError
+      setPendingReviewsCount(count || 0)
+    } catch (err) {
+      console.error('Error loading pending reviews count:', err)
+    }
+  }
+
+  const loadEmployees = async () => {
+    try {
+      const { data, error: employeeError } = await supabase
+        .from('employees')
+        .select(`
+          *,
+          professions (
+            name
+          )
+        `)
+        .order('created_at', { ascending: false })
+
+      if (employeeError) throw employeeError
+      setEmployees(data || [])
+    } catch (err) {
+      console.error('Error loading employees:', err)
+    }
+  }
 
   const loadReviews = async () => {
     try {
@@ -112,6 +111,7 @@ export const ManagerDashboardPage = () => {
       setError(null)
       await reviewService.createReview(data)
       await loadReviews()
+      await loadPendingReviewsCount() // Actualizar contador
       setShowCreateForm(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al crear revisión')
@@ -121,38 +121,57 @@ export const ManagerDashboardPage = () => {
     }
   }
 
-  const getStatusBadge = (statusId: number) => {
-    const status = REVIEW_STATUSES[statusId] || REVIEW_STATUSES[1]
+  const getStatusBadge = (statusId: number | null) => {
+    // Si es null, mostrar "En Espera"
+    if (statusId === null) {
+      return (
+        <span className="px-2 py-1 rounded text-[10px] font-bold uppercase bg-gray-500/10 text-gray-400">
+          EN ESPERA
+        </span>
+      )
+    }
+
+    const status = REVIEW_STATUSES[statusId]
+    
+    if (!status) {
+      return (
+        <span className="px-2 py-1 rounded text-[10px] font-bold uppercase bg-gray-500/10 text-gray-400">
+          DESCONOCIDO
+        </span>
+      )
+    }
     
     const colorClasses = {
       green: 'bg-green-500/10 text-green-500',
-      blue: 'bg-blue-500/20 text-blue-500',
+      red: 'bg-red-500/10 text-red-500',
       amber: 'bg-amber-500/10 text-amber-500',
-      red: 'bg-red-500/10 text-red-500'
+      gray: 'bg-gray-500/10 text-gray-400'
     }
 
     return (
       <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${colorClasses[status.color as keyof typeof colorClasses]}`}>
-        {status.name}
+        {status.name.toUpperCase()}
       </span>
     )
   }
 
-  const getStatusIndicator = (status: Employee['status']) => {
-    const colors = {
-      online: 'bg-green-500',
-      offline: 'border border-gray-500',
-      busy: 'bg-orange-500'
-    }
-
-    return <span className={`w-2 h-2 rounded-full ${colors[status]}`}></span>
+  const getStatusIndicator = (isManager: boolean) => {
+    return isManager ? (
+      <span className="px-2 py-1 rounded text-[9px] font-bold uppercase bg-purple-500/10 text-purple-400">
+        GERENTE
+      </span>
+    ) : (
+      <span className="px-2 py-1 rounded text-[9px] font-bold uppercase bg-blue-500/10 text-blue-400">
+        EMPLEADO
+      </span>
+    )
   }
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString('es-ES', { 
       day: '2-digit', 
-      month: 'short', 
+      month: '2-digit', 
       year: 'numeric' 
     })
   }
@@ -332,23 +351,31 @@ export const ManagerDashboardPage = () => {
 
             {/* Employees Sidebar */}
             <div className="space-y-4">
-              <h2 className="text-white text-lg sm:text-xl font-bold px-2">Empleados</h2>
+              <h2 className="text-white text-lg sm:text-xl font-bold px-2">Empleados de la Empresa</h2>
               <div className="bg-[#111822] rounded-xl border border-gray-800 p-4 flex flex-col gap-4">
-                {employees.map((employee) => (
-                  <div
-                    key={employee.id}
-                    className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-800/30 transition-colors cursor-pointer"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold flex-shrink-0">
-                      {employee.name.charAt(0)}
-                    </div>
-                    <div className="flex flex-col flex-1 min-w-0">
-                      <span className="text-white text-sm font-semibold truncate">{employee.name}</span>
-                      <span className="text-gray-400 text-xs truncate">{employee.role}</span>
-                    </div>
-                    {getStatusIndicator(employee.status)}
+                {employees.length === 0 ? (
+                  <div className="text-center text-gray-400 py-4">
+                    No hay empleados registrados
                   </div>
-                ))}
+                ) : (
+                  employees.map((employee) => (
+                    <div
+                      key={employee.id}
+                      className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-800/30 transition-colors cursor-pointer"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold flex-shrink-0">
+                        {employee.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <span className="text-white text-sm font-semibold truncate capitalize">{employee.name}</span>
+                        <span className="text-gray-400 text-xs truncate capitalize">
+                          {employee.professions?.name || 'Sin profesión'}
+                        </span>
+                      </div>
+                      {getStatusIndicator(employee.is_manager)}
+                    </div>
+                  ))
+                )}
 
                 <button className="w-full mt-2 py-2 text-gray-400 text-xs font-medium hover:text-white transition-colors border-t border-gray-800 pt-4">
                   Ver Directorio Completo

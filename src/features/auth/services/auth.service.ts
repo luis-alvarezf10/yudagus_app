@@ -32,23 +32,40 @@ export const authService = {
   },
 
   async getCurrentUser(): Promise<User | null> {
-    const { data: { user }, error } = await supabase.auth.getUser()
-    if (error || !user) return null
-    
-    // Obtener información del empleado desde la tabla employees
-    const { data: employeeData } = await supabase
-      .from('employees')
-      .select('name, is_manager')
-      .eq('id', user.id)
-      .single()
-    
-    return {
-      id: user.id,
-      email: user.email!,
-      name: employeeData?.name,
-      is_manager: employeeData?.is_manager || false,
-      created_at: user.created_at
-    } as User
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser()
+      if (error || !user) return null
+      
+      // Obtener información del empleado desde la tabla employees
+      const { data: employeeData, error: employeeError } = await supabase
+        .from('employees')
+        .select('name, is_manager')
+        .eq('id', user.id)
+        .single()
+      
+      // Si no hay datos de empleado, devolver usuario básico
+      if (employeeError) {
+        console.warn('Employee data not found, using basic user info:', employeeError)
+        return {
+          id: user.id,
+          email: user.email!,
+          name: user.email?.split('@')[0],
+          is_manager: false,
+          created_at: user.created_at
+        } as User
+      }
+      
+      return {
+        id: user.id,
+        email: user.email!,
+        name: employeeData?.name,
+        is_manager: employeeData?.is_manager || false,
+        created_at: user.created_at
+      } as User
+    } catch (error) {
+      console.error('Error getting current user:', error)
+      return null
+    }
   },
 
   async getSession() {

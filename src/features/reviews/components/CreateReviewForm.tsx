@@ -17,7 +17,7 @@ export const CreateReviewForm = ({ onSubmit, loading, error, onCancel }: CreateR
     description: '',
     part: '',
     date: new Date().toISOString().split('T')[0],
-    id_status: 1 // Programado por defecto
+    id_status: null // En espera por defecto
   })
 
   const handleSubmit = async (e: FormEvent) => {
@@ -31,7 +31,7 @@ export const CreateReviewForm = ({ onSubmit, loading, error, onCancel }: CreateR
         description: '',
         part: '',
         date: new Date().toISOString().split('T')[0],
-        id_status: 1
+        id_status: null
       })
     } catch (err) {
       console.error('Error creating review:', err)
@@ -119,15 +119,15 @@ export const CreateReviewForm = ({ onSubmit, loading, error, onCancel }: CreateR
 
         <div>
           <label htmlFor="id_status" className="block text-sm font-medium text-gray-300 mb-1">
-            Estado *
+            Estado
           </label>
           <select
             id="id_status"
-            value={formData.id_status}
-            onChange={(e) => setFormData({ ...formData, id_status: Number(e.target.value) })}
-            required
+            value={formData.id_status ?? ''}
+            onChange={(e) => setFormData({ ...formData, id_status: e.target.value ? Number(e.target.value) : null })}
             className="w-full px-3 py-2 bg-[#233348] border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
+            <option value="">En Espera</option>
             {Object.values(REVIEW_STATUSES).map((status) => (
               <option key={status.id} value={status.id}>
                 {status.name}

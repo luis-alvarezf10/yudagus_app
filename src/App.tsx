@@ -1,6 +1,8 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './features/auth'
 import { LoginPage } from './features/auth'
 import { DashboardPage, ManagerDashboardPage } from './features/dashboard'
+import { ScheduleReviewPage } from './features/reviews'
 
 function App() {
   const { user, isAuthenticated, loading } = useAuth()
@@ -20,13 +22,28 @@ function App() {
     return <LoginPage />
   }
 
-  // Mostrar dashboard de gerente si is_manager es true
+  // Rutas para gerentes
   if (user?.is_manager) {
-    return <ManagerDashboardPage />
+    return (
+      <BrowserRouter>
+        <Routes>
+          <Route path="/dashboard" element={<ManagerDashboardPage />} />
+          <Route path="/reviews/schedule" element={<ScheduleReviewPage />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </BrowserRouter>
+    )
   }
 
-  // Mostrar dashboard normal para empleados regulares
-  return <DashboardPage />
+  // Rutas para empleados regulares
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </BrowserRouter>
+  )
 }
 
 export default App

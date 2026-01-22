@@ -6,6 +6,7 @@ export interface Review {
   part: string
   date: string
   id_status: number | null
+  id_manager: string | null
   created_at?: string
 }
 
@@ -16,6 +17,7 @@ export interface CreateReviewData {
   part: string
   date: string
   id_status: number | null
+  id_manager?: string | null
 }
 
 export interface ReviewStatus {

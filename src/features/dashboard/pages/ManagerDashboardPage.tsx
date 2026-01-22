@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Sidebar } from '../components/Sidebar'
-import { reviewService, REVIEW_STATUSES, CreateReviewForm } from '@/features/reviews'
-import type { Review, CreateReviewData } from '@/features/reviews'
+import { reviewService, REVIEW_STATUSES } from '@/features/reviews'
+import type { Review } from '@/features/reviews'
 import { supabase } from '@/lib/supabase'
 
 interface StatCard {
@@ -26,12 +27,11 @@ interface Employee {
 }
 
 export const ManagerDashboardPage = () => {
+  const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [reviews, setReviews] = useState<Review[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [showCreateForm, setShowCreateForm] = useState(false)
   const [pendingReviewsCount, setPendingReviewsCount] = useState(0)
   
   const stats: StatCard[] = [
@@ -99,23 +99,6 @@ export const ManagerDashboardPage = () => {
       setReviews(data)
     } catch (err) {
       console.error('Error loading reviews:', err)
-      setError('Error al cargar las revisiones')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleCreateReview = async (data: CreateReviewData) => {
-    try {
-      setLoading(true)
-      setError(null)
-      await reviewService.createReview(data)
-      await loadReviews()
-      await loadPendingReviewsCount() // Actualizar contador
-      setShowCreateForm(false)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al crear revisión')
-      throw err
     } finally {
       setLoading(false)
     }
@@ -255,26 +238,13 @@ export const ManagerDashboardPage = () => {
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 px-2">
                 <h2 className="text-white text-lg sm:text-xl font-bold">Revisiones Técnicas Recientes</h2>
                 <button 
-                  onClick={() => setShowCreateForm(!showCreateForm)}
+                  onClick={() => navigate('/reviews/schedule')}
                   className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  <span className="text-lg">{showCreateForm ? '✕' : '+'}</span>
-                  <span>{showCreateForm ? 'Cancelar' : 'Crear Revisión'}</span>
+                  <span className="text-lg">+</span>
+                  <span>Crear Revisión</span>
                 </button>
               </div>
-
-              {/* Formulario de creación */}
-              {showCreateForm && (
-                <div className="bg-[#111822] rounded-xl border border-gray-800 p-4 sm:p-6">
-                  <h3 className="text-white text-lg font-semibold mb-4">Nueva Revisión Técnica</h3>
-                  <CreateReviewForm
-                    onSubmit={handleCreateReview}
-                    loading={loading}
-                    error={error}
-                    onCancel={() => setShowCreateForm(false)}
-                  />
-                </div>
-              )}
 
               {/* Tabla/Lista de revisiones */}
               <div className="bg-[#111822] rounded-xl border border-gray-800 overflow-hidden">

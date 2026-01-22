@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { User, LoginCredentials } from '../types/auth.types'
@@ -12,7 +13,7 @@ interface AuthContextType {
   isAuthenticated: boolean
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
@@ -20,16 +21,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        // Obtener datos del empleado
-        supabase
-          .from('employees')
-          .select('name, is_manager')
-          .eq('id', session.user.id)
-          .single()
-          .then(({ data: employeeData }) => {
+    const loadUser = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (session?.user) {
+          try {
+            const { data: employeeData } = await supabase
+              .from('employees')
+              .select('name, is_manager')
+              .eq('id', session.user.id)
+              .single()
+
             setUser({
               id: session.user.id,
               email: session.user.email!,
@@ -37,9 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               is_manager: employeeData?.is_manager || false,
               created_at: session.user.created_at
             })
-            setLoading(false)
-          })
-          .catch(() => {
+          } catch {
             setUser({
               id: session.user.id,
               email: session.user.email!,
@@ -47,43 +48,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               is_manager: false,
               created_at: session.user.created_at
             })
-            setLoading(false)
-          })
-      } else {
+          }
+        } else {
+          setUser(null)
+        }
+      } catch {
         setUser(null)
+      } finally {
         setLoading(false)
       }
-    }).catch(() => {
-      setUser(null)
-      setLoading(false)
-    })
+    }
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    loadUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        supabase
-          .from('employees')
-          .select('name, is_manager')
-          .eq('id', session.user.id)
-          .single()
-          .then(({ data: employeeData }) => {
-            setUser({
-              id: session.user.id,
-              email: session.user.email!,
-              name: employeeData?.name || session.user.email?.split('@')[0],
-              is_manager: employeeData?.is_manager || false,
-              created_at: session.user.created_at
-            })
+        try {
+          const { data: employeeData } = await supabase
+            .from('employees')
+            .select('name, is_manager')
+            .eq('id', session.user.id)
+            .single()
+
+          setUser({
+            id: session.user.id,
+            email: session.user.email!,
+            name: employeeData?.name || session.user.email?.split('@')[0],
+            is_manager: employeeData?.is_manager || false,
+            created_at: session.user.created_at
           })
-          .catch(() => {
-            setUser({
-              id: session.user.id,
-              email: session.user.email!,
-              name: session.user.email?.split('@')[0],
-              is_manager: false,
-              created_at: session.user.created_at
-            })
+        } catch {
+          setUser({
+            id: session.user.id,
+            email: session.user.email!,
+            name: session.user.email?.split('@')[0],
+            is_manager: false,
+            created_at: session.user.created_at
           })
+        }
       } else {
         setUser(null)
       }
@@ -144,12 +146,4 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </AuthContext.Provider>
   )
-}
-
-export const useAuth = () => {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
 }

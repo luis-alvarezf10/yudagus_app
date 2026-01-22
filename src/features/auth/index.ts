@@ -1,5 +1,6 @@
 export { LoginPage } from './pages/LoginPage'
 export { LoginForm } from './components/LoginForm'
-export { useAuth, AuthProvider } from './context/AuthContext'
+export { AuthProvider } from './context/AuthContext'
+export { useAuth } from './hooks/useAuthContext'
 export { authService } from './services/auth.service'
 export type { User, LoginCredentials, AuthState } from './types/auth.types'

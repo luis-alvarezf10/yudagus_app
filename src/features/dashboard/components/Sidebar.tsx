@@ -18,13 +18,23 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const menuItems: MenuItem[] = [
+  // Menú para gerentes
+  const managerMenuItems: MenuItem[] = [
     { id: 'dashboard', label: 'Panel de Control', icon: '📊', path: '/dashboard' },
     { id: 'projects', label: 'Proyectos', icon: '💼', path: '/projects' },
     { id: 'clients', label: 'Clientes', icon: '👥', path: '/clients' },
     { id: 'employees', label: 'Empleados', icon: '👤', path: '/employees' },
     { id: 'reviews', label: 'Revisiones', icon: '📝', path: '/reviews' },
   ]
+
+  // Menú para empleados
+  const employeeMenuItems: MenuItem[] = [
+    { id: 'dashboard', label: 'Panel de Control', icon: '📊', path: '/dashboard' },
+    { id: 'my-reviews', label: 'Mis Revisiones', icon: '📝', path: '/my-reviews' },
+    { id: 'projects', label: 'Proyectos', icon: '💼', path: '/projects' },
+  ]
+
+  const menuItems = user?.is_manager ? managerMenuItems : employeeMenuItems
 
   const handleLogout = async () => {
     try {

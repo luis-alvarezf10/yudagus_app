@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@/features/auth'
 import { supabase } from '@/lib/supabase'
 
 interface Project {
@@ -11,6 +12,7 @@ interface Project {
 
 export const ProjectsPage = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -42,15 +44,19 @@ export const ProjectsPage = () => {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-white text-2xl font-bold mb-2">Proyectos</h1>
-          <p className="text-gray-400 text-sm">Gestiona todos los proyectos de la empresa</p>
+          <p className="text-gray-400 text-sm">
+            {user?.is_manager ? 'Gestiona todos los proyectos de la empresa' : 'Consulta los proyectos de la empresa'}
+          </p>
         </div>
-        <button 
-          onClick={() => navigate('/projects/create')}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <span className="text-lg">+</span>
-          <span>Crear Proyecto</span>
-        </button>
+        {user?.is_manager && (
+          <button 
+            onClick={() => navigate('/projects/create')}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <span className="text-lg">+</span>
+            <span>Crear Proyecto</span>
+          </button>
+        )}
       </div>
 
       {error && (

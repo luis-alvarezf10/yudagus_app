@@ -25,3 +25,17 @@ export const formatDateWithOptions = (
   
   return date.toLocaleDateString(locale, options)
 }
+
+/**
+ * Verifica si una fecha en formato YYYY-MM-DD es hoy
+ */
+export const isToday = (dateString: string): boolean => {
+  const [year, month, day] = dateString.split('-').map(Number)
+  
+  const today = new Date()
+  const todayYear = today.getFullYear()
+  const todayMonth = today.getMonth() + 1
+  const todayDay = today.getDate()
+  
+  return year === todayYear && month === todayMonth && day === todayDay
+}

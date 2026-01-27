@@ -31,7 +31,8 @@ export interface ReviewStatus {
 export const REVIEW_STATUSES: Record<number, ReviewStatus> = {
   1: { id: 1, name: 'Aceptado', color: 'green', description: 'Se acepta el producto sin modificaciones' },
   2: { id: 2, name: 'Rechazado', color: 'red', description: 'Rechazado debido a errores graves' },
-  3: { id: 3, name: 'Pendiente', color: 'amber', description: 'Aceptado el producto de manera provisional' }
+  3: { id: 3, name: 'Pendiente', color: 'amber', description: 'Aceptado el producto de manera provisional' },
+  4: { id: 4, name: 'Terminado', color: 'green', description: 'Reunión completada' }
 }
 
 // Estado por defecto cuando id_status es null

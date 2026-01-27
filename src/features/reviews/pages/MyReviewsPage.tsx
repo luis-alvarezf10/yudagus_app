@@ -181,6 +181,8 @@ export const MyReviewsPage = () => {
           {participations.map((participation) => {
             const status = getStatusInfo(participation.reviews.id_status)
             const isTodayReview = isToday(participation.reviews.date)
+            const hasNoStatus = participation.reviews.id_status === null // No tiene estado asignado
+            const showTodayBadge = isTodayReview && hasNoStatus
             
             return (
               <div
@@ -192,10 +194,12 @@ export const MyReviewsPage = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-white font-semibold text-lg">{participation.reviews.title}</h3>
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(status.color)}`}>
-                        {status.name}
-                      </span>
-                      {isTodayReview && (
+                      {!showTodayBadge && (
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(status.color)}`}>
+                          {status.name}
+                        </span>
+                      )}
+                      {showTodayBadge && (
                         <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 animate-pulse">
                           🔔 HOY
                         </span>
@@ -226,8 +230,8 @@ export const MyReviewsPage = () => {
                   </div>
                 </div>
 
-                {/* Botón de Asistir si es hoy */}
-                {isTodayReview && (
+                {/* Botón de Asistir si es hoy y no tiene estado */}
+                {showTodayBadge && (
                   <div className="pt-4 border-t border-gray-700">
                     <button
                       onClick={(e) => handleAttendReview(e, participation.reviews.id)}

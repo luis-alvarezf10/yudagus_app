@@ -14,10 +14,23 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0a0f1a] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando...</p>
+          <div className="mb-8">
+            <div className="w-16 h-16 mx-auto text-blue-600">
+              <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                <path 
+                  clipRule="evenodd" 
+                  d="M24 4H42V17.3333V30.6667H24V44H6V30.6667V17.3333H24V4Z" 
+                  fill="currentColor" 
+                  fillRule="evenodd"
+                  className="animate-pulse"
+                />
+              </svg>
+            </div>
+          </div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-400 text-lg">Cargando aplicación...</p>
         </div>
       </div>
     )

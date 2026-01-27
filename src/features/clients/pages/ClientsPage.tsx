@@ -20,6 +20,10 @@ export const ClientsPage = () => {
   const [updating, setUpdating] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
   const [relatedProjectsCount, setRelatedProjectsCount] = useState(0)
+  const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [newClientName, setNewClientName] = useState('')
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
 
   useEffect(() => {
     loadClients()
@@ -180,6 +184,44 @@ export const ClientsPage = () => {
     }
   }
 
+  const handleCreateClick = () => {
+    setCreateModalOpen(true)
+  }
+
+  const handleCreateCancel = () => {
+    setCreateModalOpen(false)
+    setNewClientName('')
+    setCreateError(null)
+  }
+
+  const handleCreateConfirm = async () => {
+    if (!newClientName.trim()) return
+
+    try {
+      setCreating(true)
+      setCreateError(null)
+
+      const { data, error: createError } = await supabase
+        .from('clients')
+        .insert([{ name: newClientName.trim() }])
+        .select()
+        .single()
+
+      if (createError) throw createError
+
+      // Agregar a la lista
+      setClients([data, ...clients])
+
+      setCreateModalOpen(false)
+      setNewClientName('')
+    } catch (err) {
+      console.error('Error al crear cliente:', err)
+      setCreateError('No se pudo crear el cliente')
+    } finally {
+      setCreating(false)
+    }
+  }
+
   return (
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
@@ -187,7 +229,10 @@ export const ClientsPage = () => {
           <h1 className="text-white text-2xl font-bold mb-2">Clientes</h1>
           <p className="text-gray-400 text-sm">Gestiona todos los clientes de la empresa</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 transition-colors">
+        <button 
+          onClick={handleCreateClick}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 transition-colors"
+        >
           <span className="text-lg">+</span>
           <span>Crear Cliente</span>
         </button>
@@ -366,6 +411,72 @@ export const ClientsPage = () => {
                     <>
                       <span>🗑️</span>
                       <span>Eliminar</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Creación */}
+      {createModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#111822] rounded-xl border border-gray-800 w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center text-2xl">
+                  ➕
+                </div>
+                <div>
+                  <h3 className="text-white text-xl font-bold">Crear Cliente</h3>
+                  <p className="text-gray-400 text-sm">Agrega un nuevo cliente</p>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-gray-300 text-sm font-medium mb-2">
+                  Nombre del Cliente
+                </label>
+                <input
+                  type="text"
+                  value={newClientName}
+                  onChange={(e) => setNewClientName(e.target.value)}
+                  className="w-full px-4 py-2 bg-[#1a2332] border border-gray-700 rounded-lg text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Ej: Acme Corporation"
+                  autoFocus
+                />
+              </div>
+
+              {createError && (
+                <div className="mb-4 bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm">
+                  {createError}
+                </div>
+              )}
+
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={handleCreateCancel}
+                  disabled={creating}
+                  className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleCreateConfirm}
+                  disabled={creating || !newClientName.trim()}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  {creating ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Creando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>✓</span>
+                      <span>Crear Cliente</span>
                     </>
                   )}
                 </button>

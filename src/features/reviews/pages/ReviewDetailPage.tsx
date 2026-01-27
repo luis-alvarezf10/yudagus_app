@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/features/auth'
 import { REVIEW_STATUSES, DEFAULT_STATUS } from '../types/review.types'
+import { formatDateWithOptions } from '@/lib/dateUtils'
 
 interface ReviewDetail {
   id: string
@@ -254,7 +255,7 @@ export const ReviewDetailPage = () => {
                   <div>
                     <label className="text-gray-400 text-sm">Fecha de Revisión</label>
                     <p className="text-white mt-1">
-                      {new Date(review.date).toLocaleDateString('es-ES', {
+                      {formatDateWithOptions(review.date, 'es-ES', {
                         day: '2-digit',
                         month: 'long',
                         year: 'numeric'

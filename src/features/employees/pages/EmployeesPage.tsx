@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { formatDate } from '@/lib/dateUtils'
 
 interface Employee {
   id: string
@@ -361,7 +362,7 @@ export const EmployeesPage = () => {
                           <div>
                             <p className="text-gray-500 mb-1">Fecha</p>
                             <p className="text-white font-medium">
-                              {new Date(participation.reviews.date).toLocaleDateString('es-ES')}
+                              {formatDate(participation.reviews.date)}
                             </p>
                           </div>
                           <div>

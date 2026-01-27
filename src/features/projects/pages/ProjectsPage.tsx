@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/features/auth'
 import { supabase } from '@/lib/supabase'
 import { REVIEW_STATUSES, DEFAULT_STATUS } from '@/features/reviews/types/review.types'
+import { formatDate } from '@/lib/dateUtils'
 
 interface Project {
   id: string
@@ -381,7 +382,7 @@ export const ProjectsPage = () => {
                             <div>
                               <p className="text-gray-500 mb-1">Fecha</p>
                               <p className="text-white font-medium">
-                                {new Date(review.date).toLocaleDateString('es-ES')}
+                                {formatDate(review.date)}
                               </p>
                             </div>
                             <div>

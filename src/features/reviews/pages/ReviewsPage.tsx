@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { REVIEW_STATUSES, DEFAULT_STATUS } from '../types/review.types'
+import { formatDate } from '@/lib/dateUtils'
 
 interface Review {
   id: string
@@ -139,7 +140,7 @@ export const ReviewsPage = () => {
                   <div className="text-right flex-shrink-0">
                     <p className="text-gray-500 text-xs mb-1">Fecha de revisión</p>
                     <p className="text-white font-semibold">
-                      {new Date(review.date).toLocaleDateString()}
+                      {formatDate(review.date)}
                     </p>
                   </div>
                 </div>
